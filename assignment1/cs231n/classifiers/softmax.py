@@ -30,7 +30,23 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  N = X.shape[0]
+  C = W.shape[1]
+
+  for i in xrange(N):
+    Xi_dot_W = X[i].dot(W)
+    Xi_dot_W -= max(Xi_dot_W) # normalization trick to prevent large intermediate terms due to exponential
+    exp_func = np.exp(Xi_dot_W)
+
+    loss += - np.log(exp_func[y[i]] / sum(exp_func))
+
+    for j in xrange(C):
+      dW[:,j] += exp_func[j] / sum(exp_func) * X[i]
+      if j == y[i]:
+        dW[:,j] += -X[i]
+
+  loss = 1/N * loss + 0.5*reg*np.sum(W**2)
+  dW = 1/N * dW + reg*W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
@@ -54,7 +70,22 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  N = X.shape[0]
+
+  X_dot_W = X.dot(W)
+  X_dot_W -= np.max(X_dot_W, axis=1, keepdims=True) # normalization trick to prevent large intermediate terms due to exponential
+  exp_func = np.exp(X_dot_W)
+  
+  softmax_scores_matrix = exp_func / np.sum(exp_func, axis=1, keepdims=True)
+  softmax_scores_vec = - np.log(softmax_scores_matrix[xrange(N), y])
+
+  loss = 1/N * np.sum(softmax_scores_vec) + 0.5*reg*np.sum(W**2)
+
+  softmax_scores = softmax_scores_matrix.copy()
+  softmax_scores[xrange(N), y] += -1
+  
+  dW = (X.T).dot(softmax_scores)
+  dW =  1/N * dW + reg*W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
