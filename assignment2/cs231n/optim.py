@@ -65,7 +65,8 @@ def sgd_momentum(w, dw, config=None):
     # TODO: Implement the momentum update formula. Store the updated value in #
     # the next_w variable. You should also use and update the velocity v.     #
     ###########################################################################
-    pass
+    v = config['momentum'] * v - config['learning_rate'] * dw
+    next_w = w + v
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -75,7 +76,7 @@ def sgd_momentum(w, dw, config=None):
 
 
 
-def rmsprop(x, dx, config=None):
+def rmsprop(w, dw, config=None):
     """
     Uses the RMSProp update rule, which uses a moving average of squared
     gradient values to set adaptive per-parameter learning rates.
@@ -91,23 +92,31 @@ def rmsprop(x, dx, config=None):
     config.setdefault('learning_rate', 1e-2)
     config.setdefault('decay_rate', 0.99)
     config.setdefault('epsilon', 1e-8)
-    config.setdefault('cache', np.zeros_like(x))
+    config.setdefault('cache', np.zeros_like(w))
 
-    next_x = None
+    next_w = None
     ###########################################################################
-    # TODO: Implement the RMSprop update formula, storing the next value of x #
-    # in the next_x variable. Don't forget to update cache value stored in    #
+    # TODO: Implement the RMSprop update formula, storing the next value of w #
+    # in the next_w variable. Don't forget to update cache value stored in    #
     # config['cache'].                                                        #
     ###########################################################################
-    pass
+    decay_rate = config['decay_rate']
+    learning_rate = config['learning_rate']
+    cache = config['cache']
+    eps = config['epsilon']
+
+    cache = decay_rate * cache + (1 - decay_rate) * (dw**2)
+    next_w = w - (learning_rate / (np.sqrt(cache) + eps)) * dw
+
+    config['cache'] = cache
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
 
-    return next_x, config
+    return next_w, config
 
 
-def adam(x, dx, config=None):
+def adam(w, dw, config=None):
     """
     Uses the Adam update rule, which incorporates moving averages of both the
     gradient and its square and a bias correction term.
@@ -126,19 +135,36 @@ def adam(x, dx, config=None):
     config.setdefault('beta1', 0.9)
     config.setdefault('beta2', 0.999)
     config.setdefault('epsilon', 1e-8)
-    config.setdefault('m', np.zeros_like(x))
-    config.setdefault('v', np.zeros_like(x))
+    config.setdefault('m', np.zeros_like(w))
+    config.setdefault('v', np.zeros_like(w))
     config.setdefault('t', 1)
 
-    next_x = None
+    next_w = None
     ###########################################################################
-    # TODO: Implement the Adam update formula, storing the next value of x in #
-    # the next_x variable. Don't forget to update the m, v, and t variables   #
+    # TODO: Implement the Adam update formula, storing the next value of w in #
+    # the next_w variable. Don't forget to update the m, v, and t variables   #
     # stored in config.                                                       #
     ###########################################################################
-    pass
+    config['t'] += 1
+    
+    learning_rate = config['learning_rate']
+    beta1 = config['beta1']
+    beta2 = config['beta2']
+    eps = config['epsilon']
+    m = config['m']
+    v = config['v']
+    t = config['t']
+
+    m = beta1 * m + (1 - beta1) * dw
+    mt = m / (1 - beta1**t)
+    v = beta2 * v + (1 - beta2) * (dw**2)
+    vt = v / (1 - beta2**t)
+
+    next_w = w - (learning_rate / (np.sqrt(vt)+eps)) * mt
+    config['m'] = m
+    config['v'] = v
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
 
-    return next_x, config
+    return next_w, config
